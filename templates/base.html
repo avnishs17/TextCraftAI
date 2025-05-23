@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TextCraftAI{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .typing-animation {
+            border-right: 2px solid #667eea;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { border-color: transparent; }
+            51%, 100% { border-color: #667eea; }
+        }
+        .pulse-button {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="min-h-screen gradient-bg">
+    <nav class="glass-effect p-4 mb-8">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-magic text-white text-2xl"></i>
+                <h1 class="text-white text-2xl font-bold">TextCraftAI</h1>
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <a href="/" class="text-white hover:text-gray-300 transition duration-300">
+                    <i class="fas fa-home mr-2"></i>Home
+                </a>
+                <a href="/train-ui" class="text-white hover:text-gray-300 transition duration-300">
+                    <i class="fas fa-cog mr-2"></i>Train Model
+                </a>
+                <a href="/docs" class="text-white hover:text-gray-300 transition duration-300">
+                    <i class="fas fa-book mr-2"></i>API Docs
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="mt-16 py-8 text-center text-white opacity-70">
+        <p>&copy; 2025 TextCraftAI. Powered by AI for intelligent text summarization.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

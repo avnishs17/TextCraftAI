@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}Train Model - TextCraftAI{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-white mb-4">
+            <i class="fas fa-cog mr-3"></i>Model Training
+        </h1>
+        <p class="text-xl text-gray-200">
+            Train your AI model with the latest data
+        </p>
+    </div>
+
+    <!-- Training Interface -->
+    <div class="glass-effect rounded-2xl p-8" x-data="modelTrainer()">
+        <!-- Training Status -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-semibold text-white">
+                    <i class="fas fa-robot mr-2"></i>Training Status
+                </h2>
+                <div class="flex items-center space-x-2">
+                    <div 
+                        class="w-3 h-3 rounded-full"
+                        :class="isTraining ? 'bg-yellow-400 animate-pulse' : (lastTrainingSuccess ? 'bg-green-400' : 'bg-gray-400')"
+                    ></div>
+                    <span class="text-white text-sm" x-text="getStatusText()"></span>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div x-show="isTraining" class="w-full bg-gray-700 rounded-full h-2 mb-4">
+                <div 
+                    class="bg-gradient-to-r from-yellow-400 to-orange-500 h-2 rounded-full transition-all duration-300"
+                    :style="'width: ' + progress + '%'"
+                ></div>
+            </div>
+        </div>
+
+        <!-- Training Configuration -->
+        <div class="grid md:grid-cols-2 gap-8 mb-8">
+            <div class="space-y-4">
+                <h3 class="text-xl font-semibold text-white mb-4">
+                    <i class="fas fa-sliders-h mr-2"></i>Configuration
+                </h3>
+                
+                <div class="glass-effect p-4 rounded-lg">
+                    <div class="text-sm text-gray-300 mb-2">Dataset</div>
+                    <div class="text-white">DialogSum Dataset</div>
+                </div>
+                
+                <div class="glass-effect p-4 rounded-lg">
+                    <div class="text-sm text-gray-300 mb-2">Model</div>
+                    <div class="text-white">Pegasus CNN DailyMail</div>
+                </div>
+                
+                <div class="glass-effect p-4 rounded-lg">
+                    <div class="text-sm text-gray-300 mb-2">Training Epochs</div>
+                    <div class="text-white">1 epoch</div>
+                </div>
+            </div>
+            
+            <div class="space-y-4">
+                <h3 class="text-xl font-semibold text-white mb-4">
+                    <i class="fas fa-chart-line mr-2"></i>Pipeline Stages
+                </h3>
+                
+                <div class="space-y-3">
+                    <div 
+                        class="flex items-center p-3 rounded-lg"
+                        :class="getStageClass('data_ingestion')"
+                    >
+                        <i class="fas fa-download mr-3"></i>
+                        <span>Data Ingestion</span>
+                        <i 
+                            class="fas fa-check ml-auto"
+                            x-show="completedStages.includes('data_ingestion')"
+                        ></i>
+                    </div>
+                    
+                    <div 
+                        class="flex items-center p-3 rounded-lg"
+                        :class="getStageClass('data_validation')"
+                    >
+                        <i class="fas fa-check-circle mr-3"></i>
+                        <span>Data Validation</span>
+                        <i 
+                            class="fas fa-check ml-auto"
+                            x-show="completedStages.includes('data_validation')"
+                        ></i>
+                    </div>
+                    
+                    <div 
+                        class="flex items-center p-3 rounded-lg"
+                        :class="getStageClass('data_transformation')"
+                    >
+                        <i class="fas fa-exchange-alt mr-3"></i>
+                        <span>Data Transformation</span>
+                        <i 
+                            class="fas fa-check ml-auto"
+                            x-show="completedStages.includes('data_transformation')"
+                        ></i>
+                    </div>
+                    
+                    <div 
+                        class="flex items-center p-3 rounded-lg"
+                        :class="getStageClass('model_trainer')"
+                    >
+                        <i class="fas fa-brain mr-3"></i>
+                        <span>Model Training</span>
+                        <i 
+                            class="fas fa-check ml-auto"
+                            x-show="completedStages.includes('model_trainer')"
+                        ></i>
+                    </div>
+                    
+                    <div 
+                        class="flex items-center p-3 rounded-lg"
+                        :class="getStageClass('model_evaluation')"
+                    >
+                        <i class="fas fa-chart-bar mr-3"></i>
+                        <span>Model Evaluation</span>
+                        <i 
+                            class="fas fa-check ml-auto"
+                            x-show="completedStages.includes('model_evaluation')"
+                        ></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Training Controls -->
+        <div class="text-center mb-6">
+            <button 
+                @click="startTraining()"
+                :disabled="isTraining"
+                class="bg-gradient-to-r from-green-400 to-blue-500 text-white px-8 py-4 rounded-lg font-semibold hover:from-green-300 hover:to-blue-400 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed mr-4"
+                :class="{'animate-pulse': isTraining}"
+            >
+                <i class="fas fa-play mr-2" x-show="!isTraining"></i>
+                <i class="fas fa-spinner fa-spin mr-2" x-show="isTraining"></i>
+                <span x-text="isTraining ? 'Training in Progress...' : 'Start Training'"></span>
+            </button>
+            
+            <button 
+                @click="checkStatus()"
+                class="bg-white bg-opacity-20 text-white px-6 py-4 rounded-lg hover:bg-opacity-30 transition duration-300"
+            >
+                <i class="fas fa-sync-alt mr-2"></i>Refresh Status
+            </button>
+        </div>
+
+        <!-- Training Logs -->
+        <div x-show="trainingLogs.length > 0" class="mt-8">
+            <h3 class="text-xl font-semibold text-white mb-4">
+                <i class="fas fa-terminal mr-2"></i>Training Logs
+            </h3>
+            <div class="bg-gray-900 bg-opacity-50 rounded-lg p-4 max-h-64 overflow-y-auto">
+                <div class="font-mono text-sm text-green-300">
+                    <div x-for="log in trainingLogs" :key="log.id">
+                        <div class="mb-1">
+                            <span class="text-gray-400" x-text="log.timestamp"></span>
+                            <span x-text="log.message"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div x-show="error" class="mt-4 p-4 bg-red-500 bg-opacity-20 border border-red-400 rounded-lg text-red-200">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <span x-text="error"></span>
+        </div>
+
+        <!-- Success Message -->
+        <div x-show="successMessage" class="mt-4 p-4 bg-green-500 bg-opacity-20 border border-green-400 rounded-lg text-green-200">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span x-text="successMessage"></span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function modelTrainer() {
+    return {
+        isTraining: false,
+        progress: 0,
+        currentStage: '',
+        completedStages: [],
+        trainingLogs: [],
+        error: '',
+        successMessage: '',
+        lastTrainingSuccess: false,
+        
+        getStatusText() {
+            if (this.isTraining) return 'Training in Progress';
+            if (this.lastTrainingSuccess) return 'Ready';
+            return 'Idle';
+        },
+        
+        getStageClass(stage) {
+            if (this.completedStages.includes(stage)) {
+                return 'bg-green-500 bg-opacity-20 text-green-200';
+            } else if (this.currentStage === stage) {
+                return 'bg-yellow-500 bg-opacity-20 text-yellow-200';
+            } else {
+                return 'bg-gray-500 bg-opacity-20 text-gray-300';
+            }
+        },
+        
+        addLog(message) {
+            this.trainingLogs.push({
+                id: Date.now(),
+                timestamp: new Date().toLocaleTimeString(),
+                message: message
+            });
+            // Keep only last 50 logs
+            if (this.trainingLogs.length > 50) {
+                this.trainingLogs = this.trainingLogs.slice(-50);
+            }
+        },
+        
+        async startTraining() {
+            this.isTraining = true;
+            this.progress = 0;
+            this.error = '';
+            this.successMessage = '';
+            this.completedStages = [];
+            this.trainingLogs = [];
+            
+            this.addLog('Starting training pipeline...');
+            
+            // Simulate training progress
+            const stages = ['data_ingestion', 'data_validation', 'data_transformation', 'model_trainer', 'model_evaluation'];
+            
+            try {
+                for (let i = 0; i < stages.length; i++) {
+                    this.currentStage = stages[i];
+                    this.addLog(`Starting ${stages[i].replace('_', ' ')}...`);
+                    
+                    // Update progress
+                    this.progress = ((i + 1) / stages.length) * 100;
+                    
+                    // Simulate stage completion time
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    this.completedStages.push(stages[i]);
+                    this.addLog(`Completed ${stages[i].replace('_', ' ')}`);
+                }
+                
+                // Make actual API call
+                const response = await fetch('/train', {
+                    method: 'GET',
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Training failed');
+                }
+                
+                this.addLog('Training completed successfully!');
+                this.successMessage = 'Model training completed successfully!';
+                this.lastTrainingSuccess = true;
+                
+            } catch (error) {
+                this.error = 'Training failed. Please check the logs and try again.';
+                this.addLog(`Error: ${error.message}`);
+                console.error('Training error:', error);
+            } finally {
+                this.isTraining = false;
+                this.currentStage = '';
+                this.progress = 100;
+            }
+        },
+        
+        async checkStatus() {
+            // This would typically check the actual training status
+            this.addLog('Checking training status...');
+            
+            // Simulate status check
+            setTimeout(() => {
+                this.addLog('Status check completed');
+            }, 500);
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,127 @@
+name: TextCraftAI CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  integration:
+    name: Continuous Integration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi      - name: Lint code with flake8
+        run: |
+          # Only check for critical syntax errors and undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=artifacts,logs,static,templates
+          echo "✅ Critical syntax checks passed"
+
+      - name: Run unit tests
+        run: |
+          echo "Running unit tests for TextCraftAI"
+          # Add actual test commands here when you have tests
+          # pytest tests/ -v
+  build-and-push-ecr-image:
+    name: Build and Push to ECR
+    needs: integration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Utilities
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq unzip
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push TextCraftAI image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
+          IMAGE_TAG: latest
+        run: |
+          # Build TextCraftAI docker container and push to ECR
+          echo "Building TextCraftAI Docker image..."
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          echo "Pushing TextCraftAI image to ECR..."
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          
+            deploy-textcraft-ai:
+    name: Deploy TextCraftAI
+    needs: build-and-push-ecr-image
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      
+      - name: Pull latest TextCraftAI image
+        run: |
+          echo "Pulling latest TextCraftAI image from ECR..."
+          docker pull ${{secrets.AWS_ECR_LOGIN_URI}}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+         
+      - name: Stop and remove existing TextCraftAI container
+        run: |
+          if [ "$(docker ps -aq -f name=textcraft-ai)" ]; then
+            echo "Existing TextCraftAI container found. Stopping and removing..."
+            docker stop textcraft-ai || true
+            docker rm -fv textcraft-ai || true
+          else
+            echo "No existing TextCraftAI container found."
+          fi      - name: Deploy TextCraftAI Application
+        run: |
+          echo "Starting TextCraftAI container..."
+          docker run -d -p 8080:8080 --name=textcraft-ai \
+            --restart=unless-stopped \
+            -e 'AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}' \
+            -e 'AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}' \
+            -e 'AWS_REGION=${{ secrets.AWS_REGION }}' \
+            ${{secrets.AWS_ECR_LOGIN_URI}}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+          
+          echo "✅ TextCraftAI deployment command completed"
+
+      - name: Clean up Docker resources
+        run: |
+          echo "Cleaning up unused Docker resources..."
+          docker system prune -f

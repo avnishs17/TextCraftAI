@@ -26,6 +26,10 @@ list_of_files = [
     "Dockerfile",
     "requirements.txt",
     "setup.py",
+    f"templates/base.html",
+    f"templates/index.html",
+    f"templates/train.html"
+    f"static/index.css"
 
 ]
 
