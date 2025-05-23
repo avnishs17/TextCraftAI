@@ -25,11 +25,31 @@
         }
         .pulse-button {
             animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
+        }        @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
+        }
+        
+        /* Custom slider styling */
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #fbbf24;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .slider::-moz-range-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #fbbf24;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
     </style>
 </head>
@@ -43,19 +63,15 @@
                 <a href="/" class="text-white hover:text-gray-300 transition duration-300">
                     <i class="fas fa-home mr-2"></i>Home
                 </a>
-                <a href="/train-ui" class="text-white hover:text-gray-300 transition duration-300">
-                    <i class="fas fa-cog mr-2"></i>Train Model
-                </a>
+                <!-- Training removed for security - only summarization available -->
             </div>
         </div>
     </nav>
 
     <main class="container mx-auto px-4">
         {% block content %}{% endblock %}
-    </main>
-
-    <footer class="mt-16 py-8 text-center text-white opacity-70">
-        <p>&copy; 2025 TextCraftAI. Powered by AI for intelligent text summarization.</p>
+    </main>    <footer class="mt-16 py-8 text-center text-white opacity-70">
+        <p>&copy; 2025 TextCraftAI. Professional AI-powered text summarization service.</p>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>

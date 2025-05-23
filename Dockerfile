@@ -24,6 +24,7 @@ COPY main.py /app/
 COPY setup.py /app/
 COPY templates/ /app/templates/
 COPY static/ /app/static/
+COPY download_models.py /app/
 
 # Copy trained model artifacts (if they exist) - create empty directory if not
 RUN mkdir -p /app/artifacts
@@ -31,12 +32,15 @@ RUN mkdir -p /app/artifacts
 # Environment variable to control whether to train during build
 ENV TRAIN_ON_BUILD=false
 
-# Pre-download the base model to cache it
-RUN python3 -c "from transformers import AutoTokenizer, AutoModelForSeq2SeqLM; AutoTokenizer.from_pretrained('google/pegasus-cnn_dailymail'); AutoModelForSeq2SeqLM.from_pretrained('google/pegasus-cnn_dailymail')" || echo "Model download failed, will download at runtime"
+# Pre-download models to cache them (improves startup time on hosted platforms)
+RUN python3 download_models.py
 
 # Optional: Train model during build (disabled by default for faster builds)
 # Uncomment the next line if you want to train during Docker build
 # RUN if [ "$TRAIN_ON_BUILD" = "true" ]; then python3 main.py; fi
 
-# Default command to run the app
-CMD ["python3", "app.py"]
+# Expose port for Railway
+EXPOSE $PORT
+
+# Default command to run the app with Railway's PORT environment variable
+CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-8080}

@@ -178,41 +178,8 @@
                         class="w-full h-64 p-4 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-20 flex items-center justify-center"
                     >
                         <div class="text-center">
-                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-300 mx-auto mb-4"></div>                            <p class="text-white">Paraphrasing your text...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Length Control for Paraphrasing -->
-            <div class="mt-6 mb-6">
-                <label class="block text-white text-lg font-semibold mb-4">
-                    <i class="fas fa-sliders-h mr-2"></i>Paraphrase Length Control
-                </label>
-                <div class="bg-white bg-opacity-10 rounded-lg p-6">
-                    <div class="flex items-center space-x-4">
-                        <span class="text-white text-sm font-medium min-w-16">Shorter</span>
-                        <div class="flex-1">
-                            <input 
-                                type="range" 
-                                min="0.5" 
-                                max="2.0" 
-                                step="0.1" 
-                                x-model="lengthFactor"
-                                class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer slider"
-                                style="background: linear-gradient(to right, #fbbf24 0%, #fbbf24 var(--value), #d1d5db var(--value), #d1d5db 100%);"
-                                x-on:input="updateSliderBackground($event)"
-                            >
-                        </div>
-                        <span class="text-white text-sm font-medium min-w-16">Longer</span>
-                    </div>
-                    <div class="flex justify-between items-center mt-3">
-                        <div class="text-sm text-gray-300">
-                            <span>Length Factor: </span>
-                            <span x-text="lengthFactor" class="text-yellow-300 font-semibold"></span>
-                        </div>
-                        <div class="text-sm text-gray-300">
-                            <span x-text="getLengthDescription(lengthFactor)" class="text-yellow-300"></span>
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-300 mx-auto mb-4"></div>
+                            <p class="text-white">Paraphrasing your text...</p>
                         </div>
                     </div>
                 </div>
@@ -306,40 +273,7 @@
                             class="p-4 rounded-lg font-semibold transition duration-300"
                         >
                             <i class="fas fa-language mr-2"></i>Paraphrase
-                        </button>                    </div>
-                </div>
-
-                <!-- Length Control for File Paraphrasing -->
-                <div class="mb-8" x-show="selectedFile && fileOperation === 'paraphrase'">
-                    <label class="block text-white text-lg font-semibold mb-4">
-                        <i class="fas fa-sliders-h mr-2"></i>Paraphrase Length Control
-                    </label>
-                    <div class="bg-white bg-opacity-10 rounded-lg p-6">
-                        <div class="flex items-center space-x-4">
-                            <span class="text-white text-sm font-medium min-w-16">Shorter</span>
-                            <div class="flex-1">
-                                <input 
-                                    type="range" 
-                                    min="0.5" 
-                                    max="2.0" 
-                                    step="0.1" 
-                                    x-model="lengthFactor"
-                                    class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer slider"
-                                    style="background: linear-gradient(to right, #fbbf24 0%, #fbbf24 var(--value), #d1d5db var(--value), #d1d5db 100%);"
-                                    x-on:input="updateSliderBackground($event)"
-                                >
-                            </div>
-                            <span class="text-white text-sm font-medium min-w-16">Longer</span>
-                        </div>
-                        <div class="flex justify-between items-center mt-3">
-                            <div class="text-sm text-gray-300">
-                                <span>Length Factor: </span>
-                                <span x-text="lengthFactor" class="text-yellow-300 font-semibold"></span>
-                            </div>
-                            <div class="text-sm text-gray-300">
-                                <span x-text="getLengthDescription(lengthFactor)" class="text-yellow-300"></span>
-                            </div>
-                        </div>
+                        </button>
                     </div>
                 </div>
 
@@ -440,7 +374,8 @@
 
 {% block scripts %}
 <script>
-function textProcessor() {    return {
+function textProcessor() {
+    return {
         activeTab: 'summarize',
         
         // Summarization
@@ -452,7 +387,6 @@ function textProcessor() {    return {
         paraphraseText: '',
         paraphraseResult: '',
         isParaphrasing: false,
-        lengthFactor: 1.0,
         
         // File processing
         selectedFile: null,
@@ -521,9 +455,9 @@ function textProcessor() {    return {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                    },                    body: JSON.stringify({
-                        text: this.paraphraseText,
-                        length_factor: this.lengthFactor
+                    },
+                    body: JSON.stringify({
+                        text: this.paraphraseText
                     })
                 });
                 
@@ -583,14 +517,10 @@ function textProcessor() {    return {
             this.error = '';
             this.fileResult = '';
             
-            try {                const formData = new FormData();
+            try {
+                const formData = new FormData();
                 formData.append('file', this.selectedFile);
                 formData.append('operation', this.fileOperation);
-                
-                // Add length factor for paraphrasing operations
-                if (this.fileOperation === 'paraphrase') {
-                    formData.append('length_factor', this.lengthFactor);
-                }
                 
                 const response = await fetch('/upload', {
                     method: 'POST',
@@ -654,22 +584,8 @@ function textProcessor() {    return {
                 setTimeout(() => { this.paraphraseResult = originalText; }, 1000);
             } else {
                 this.fileResult = 'Copied to clipboard!';
-                setTimeout(() => { this.fileResult = originalText; }, 1000);            }
-        },
-        
-        // Length factor helper functions
-        getLengthDescription(factor) {
-            if (factor < 0.7) return 'Much Shorter';
-            if (factor < 0.9) return 'Shorter';
-            if (factor > 1.3) return 'Much Longer';
-            if (factor > 1.1) return 'Longer';
-            return 'Same Length';
-        },
-        
-        updateSliderBackground(event) {
-            const slider = event.target;
-            const value = (slider.value - slider.min) / (slider.max - slider.min) * 100;
-            slider.style.setProperty('--value', value + '%');
+                setTimeout(() => { this.fileResult = originalText; }, 1000);
+            }
         }
     }
 }

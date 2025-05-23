@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}TextCraftAI - AI Text Summarization{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Hero Section -->
+    <div class="text-center mb-12">
+        <h1 class="text-5xl md:text-6xl font-bold text-white mb-4">
+            Text<span class="text-yellow-300">Craft</span>AI
+        </h1>
+        <p class="text-xl text-gray-200 mb-8 typing-animation" id="typing-text">
+            Transform lengthy texts into concise, meaningful summaries
+        </p>
+        <div class="flex justify-center space-x-4">
+            <span class="glass-effect px-4 py-2 rounded-full text-white text-sm">
+                <i class="fas fa-robot mr-2"></i>AI-Powered
+            </span>
+            <span class="glass-effect px-4 py-2 rounded-full text-white text-sm">
+                <i class="fas fa-lightning-bolt mr-2"></i>Fast Processing
+            </span>
+            <span class="glass-effect px-4 py-2 rounded-full text-white text-sm">
+                <i class="fas fa-compress-alt mr-2"></i>Smart Compression
+            </span>
+        </div>
+    </div>
+
+    <!-- Main Prediction Interface -->
+    <div class="glass-effect rounded-2xl p-8 mb-8" x-data="textSummarizer()">
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Input Section -->
+            <div>
+                <label class="block text-white text-lg font-semibold mb-4">
+                    <i class="fas fa-edit mr-2"></i>Input Text
+                </label>
+                <textarea 
+                    x-model="inputText"
+                    placeholder="Paste your text here to summarize..."
+                    class="w-full h-64 p-4 rounded-lg bg-white bg-opacity-10 text-white placeholder-gray-300 border border-white border-opacity-20 focus:border-yellow-300 focus:outline-none resize-none"
+                    @input="updateCharCount()"
+                ></textarea>
+                <div class="flex justify-between items-center mt-2 text-sm text-gray-300">
+                    <span x-text="charCount + ' characters'"></span>
+                    <button 
+                        @click="clearInput()"
+                        class="text-red-300 hover:text-red-100 transition duration-300"
+                    >
+                        <i class="fas fa-trash mr-1"></i>Clear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Output Section -->
+            <div>
+                <label class="block text-white text-lg font-semibold mb-4">
+                    <i class="fas fa-magic mr-2"></i>Summary
+                </label>
+                <div 
+                    class="w-full h-64 p-4 rounded-lg bg-white bg-opacity-10 text-white border border-white border-opacity-20 overflow-y-auto"
+                    x-show="!isLoading"
+                >
+                    <div x-show="!summary" class="text-gray-400 italic">
+                        Your AI-generated summary will appear here...
+                    </div>
+                    <div x-show="summary" x-text="summary" class="leading-relaxed"></div>
+                </div>
+                
+                <!-- Loading Animation -->
+                <div 
+                    x-show="isLoading" 
+                    class="w-full h-64 p-4 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-20 flex items-center justify-center"
+                >
+                    <div class="text-center">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-300 mx-auto mb-4"></div>
+                        <p class="text-white">Processing your text...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-center space-x-4 mt-8">
+            <button 
+                @click="summarizeText()"
+                :disabled="!inputText || isLoading"
+                class="pulse-button bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-8 py-3 rounded-lg font-semibold hover:from-yellow-300 hover:to-orange-400 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                :class="{'animate-pulse': isLoading}"
+            >
+                <i class="fas fa-compress-alt mr-2"></i>
+                <span x-text="isLoading ? 'Processing...' : 'Summarize Text'"></span>
+            </button>
+            
+            <button 
+                @click="copyToClipboard()"
+                x-show="summary"
+                class="bg-white bg-opacity-20 text-white px-6 py-3 rounded-lg hover:bg-opacity-30 transition duration-300"
+            >
+                <i class="fas fa-copy mr-2"></i>Copy Summary
+            </button>
+        </div>
+
+        <!-- Error Message -->
+        <div x-show="error" class="mt-4 p-4 bg-red-500 bg-opacity-20 border border-red-400 rounded-lg text-red-200">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <span x-text="error"></span>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="grid md:grid-cols-3 gap-6 mb-12">
+        <div class="glass-effect rounded-xl p-6 text-center">
+            <div class="text-yellow-300 text-4xl mb-4">
+                <i class="fas fa-brain"></i>
+            </div>
+            <h3 class="text-white text-xl font-semibold mb-2">AI-Powered</h3>
+            <p class="text-gray-300">Advanced transformer models for intelligent summarization</p>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6 text-center">
+            <div class="text-yellow-300 text-4xl mb-4">
+                <i class="fas fa-clock"></i>
+            </div>
+            <h3 class="text-white text-xl font-semibold mb-2">Lightning Fast</h3>
+            <p class="text-gray-300">Get summaries in seconds, not minutes</p>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6 text-center">
+            <div class="text-yellow-300 text-4xl mb-4">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3 class="text-white text-xl font-semibold mb-2">Privacy First</h3>
+            <p class="text-gray-300">Your data stays secure and private</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function textSummarizer() {
+    return {
+        inputText: '',
+        summary: '',
+        isLoading: false,
+        error: '',
+        charCount: 0,
+        
+        updateCharCount() {
+            this.charCount = this.inputText.length;
+        },
+        
+        clearInput() {
+            this.inputText = '';
+            this.summary = '';
+            this.error = '';
+            this.charCount = 0;
+        },
+        
+        async summarizeText() {
+            if (!this.inputText.trim()) {
+                this.error = 'Please enter some text to summarize';
+                return;
+            }
+            
+            this.isLoading = true;
+            this.error = '';
+            this.summary = '';
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: this.inputText
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to generate summary');
+                }
+                
+                const result = await response.json();
+                this.summary = result.summary || result;
+                
+            } catch (error) {
+                this.error = 'Error generating summary. Please try again.';
+                console.error('Error:', error);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+        
+        async copyToClipboard() {
+            try {
+                await navigator.clipboard.writeText(this.summary);
+                // Show temporary success message
+                const originalText = this.summary;
+                this.summary = 'Copied to clipboard!';
+                setTimeout(() => {
+                    this.summary = originalText;
+                }, 1000);
+            } catch (error) {
+                console.error('Failed to copy text:', error);
+            }
+        }
+    }
+}
+
+// Typing animation for hero text
+document.addEventListener('DOMContentLoaded', function() {
+    const texts = [
+        'Transform lengthy texts into concise summaries',
+        'AI-powered text summarization at your fingertips',
+        'Make reading efficient with smart compression'
+    ];
+    let textIndex = 0;
+    let charIndex = 0;
+    const typingElement = document.getElementById('typing-text');
+    
+    function typeText() {
+        if (charIndex < texts[textIndex].length) {
+            typingElement.textContent += texts[textIndex].charAt(charIndex);
+            charIndex++;
+            setTimeout(typeText, 50);
+        } else {
+            setTimeout(() => {
+                charIndex = 0;
+                typingElement.textContent = '';
+                textIndex = (textIndex + 1) % texts.length;
+                typeText();
+            }, 3000);
+        }
+    }
+    
+    typingElement.textContent = '';
+    typeText();
+});
+</script>
+{% endblock %}
