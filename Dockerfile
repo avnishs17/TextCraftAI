@@ -8,23 +8,13 @@ RUN apt-get update && apt-get upgrade -y && \
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first for better caching
-COPY requirements.txt /app/
+# Copy the entire project directory
+COPY . /app/
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the application code
-COPY src/ /app/src/
-COPY config/ /app/config/
-COPY params.yaml /app/
-COPY app.py /app/
-COPY main.py /app/
-COPY setup.py /app/
-COPY templates/ /app/templates/
-COPY download_models.py /app/
-
-# Copy trained model artifacts (if they exist) - create empty directory if not
+# Ensure artifacts directory exists
 RUN mkdir -p /app/artifacts
 
 # Environment variable to control whether to train during build
