@@ -4,8 +4,6 @@
 
 TextCraftAI is a modern text processing web application that leverages transformer-based AI models (PEGASUS and T5) to provide powerful text summarization and paraphrasing capabilities. The application offers a clean web interface and robust API endpoints to process plain text and various document formats.
 
-![TextCraftAI](https://i.imgur.com/placeholder.png)
-
 ## Features
 
 - **Text Summarization**: Condense long texts into concise, informative summaries
