@@ -1,6 +1,6 @@
 from datasets import load_dataset
 from textCraftAI.logging import logger
-from textCraftAI.entity import DataIngestionConfig
+from textCraftAI.entity.config_entity import DataIngestionConfig
 
 class DataIngestion:
     def __init__(self, config: DataIngestionConfig):
