@@ -1,0 +1,36 @@
+# Ignore unnecessary files and folders
+.git
+.gitignore
+.dvc
+.vscode
+.pytest_cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.coverage
+.nyc_output
+.grunt
+bower_components
+node_modules
+npm-debug.log*
+.DS_Store
+.env
+.venv
+env/
+venv/
+Dockerfile
+README.md
+LICENSE
+.dockerignore
+
+# Keep only essential artifacts
+logs/
+!artifacts/model_trainer/
+!artifacts/data_transformation/dialogsum_dataset/
+
+# DVC files (not needed in container)
+dvc.yaml
+.dvcignore
