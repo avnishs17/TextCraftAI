@@ -1,5 +1,6 @@
 transformers>=4.30.0
 transformers[sentencepiece]>=4.30.0
+accelerate>=0.26.0
 datasets>=2.13.0
 sacrebleu>=2.3.1
 rouge_score>=0.1.2

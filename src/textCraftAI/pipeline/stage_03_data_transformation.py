@@ -1,5 +1,5 @@
 from textCraftAI.config.configuration import ConfigurationManager
-from textCraftAI.conponents.data_transformation import DataTransformation
+from textCraftAI.components.data_transformation import DataTransformation
 from textCraftAI.logging import logger
 
 

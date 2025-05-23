@@ -1,5 +1,5 @@
 from textCraftAI.config.configuration import ConfigurationManager
-from textCraftAI.conponents.data_ingestion import DataIngestion
+from textCraftAI.components.data_ingestion import DataIngestion
 from textCraftAI.logging import logger
 
 

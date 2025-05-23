@@ -1,5 +1,5 @@
 from textCraftAI.config.configuration import ConfigurationManager
-from textCraftAI.conponents.data_validation import DataValidation
+from textCraftAI.components.data_validation import DataValidation
 from textCraftAI.logging import logger
 
 
