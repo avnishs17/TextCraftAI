@@ -1,0 +1,60 @@
+stages:
+  data_ingestion:
+    cmd: python src/textCraftAI/pipeline/stage_01_data_ingestion.py
+    deps:
+      - src/textCraftAI/pipeline/stage_01_data_ingestion.py
+      - config/config.yaml
+    outs:
+      - artifacts/data_ingestion/dialogsum_dataset
+  
+  data_validation:
+    cmd: python src/textCraftAI/pipeline/stage_02_data_validation.py
+    deps:
+      - src/textCraftAI/pipeline/stage_02_data_validation.py
+      - config/config.yaml
+      - artifacts/data_ingestion/dialogsum_dataset
+    outs:
+      - artifacts/data_validation/status.txt
+  
+  data_transformation:
+    cmd: python src/textCraftAI/pipeline/stage_03_data_transformation.py
+    deps:
+      - src/textCraftAI/pipeline/stage_03_data_transformation.py
+      - config/config.yaml
+      - artifacts/data_ingestion/dialogsum_dataset
+      - artifacts/data_validation/status.txt
+    outs:
+      - artifacts/data_transformation/dialogsum_dataset
+  
+  model_trainer:
+    cmd: python src/textCraftAI/pipeline/stage_04_model_trainer.py
+    deps:
+      - src/textCraftAI/pipeline/stage_04_model_trainer.py
+      - config/config.yaml
+      - artifacts/data_transformation/dialogsum_dataset
+    params:
+      - TrainingArguments.num_train_epochs
+      - TrainingArguments.warmup_steps
+      - TrainingArguments.per_device_train_batch_size
+      - TrainingArguments.weight_decay
+      - TrainingArguments.logging_steps
+      - TrainingArguments.evaluation_strategy
+      - TrainingArguments.eval_steps
+      - TrainingArguments.save_strategy
+      - TrainingArguments.save_steps
+      - TrainingArguments.gradient_accumulation_steps
+    outs:
+      - artifacts/model_trainer/pegasus-diaglogsum-model
+      - artifacts/model_trainer/tokenizer
+  
+  model_evaluation:
+    cmd: python src/textCraftAI/pipeline/stage_05_model_evaluation.py
+    deps: 
+      - src/textCraftAI/pipeline/stage_05_model_evaluation.py
+      - config/config.yaml
+      - artifacts/data_transformation/dialogsum_dataset
+      - artifacts/model_trainer/pegasus-diaglogsum-model
+      - artifacts/model_trainer/tokenizer
+    metrics:
+      - artifacts/model_evaluation/metrics.csv:
+          cache: false
