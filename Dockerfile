@@ -2,7 +2,6 @@ FROM python:3.10-slim-bookworm
 
 # Ensure all system packages are up to date to reduce vulnerabilities
 RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y awscli && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -24,9 +23,6 @@ COPY main.py /app/
 COPY setup.py /app/
 COPY templates/ /app/templates/
 COPY download_models.py /app/
-
-# Create static directory if it doesn't exist
-RUN mkdir -p /app/static
 
 # Copy trained model artifacts (if they exist) - create empty directory if not
 RUN mkdir -p /app/artifacts
