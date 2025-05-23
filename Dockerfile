@@ -23,8 +23,10 @@ COPY app.py /app/
 COPY main.py /app/
 COPY setup.py /app/
 COPY templates/ /app/templates/
-COPY static/ /app/static/
 COPY download_models.py /app/
+
+# Create static directory if it doesn't exist
+RUN mkdir -p /app/static
 
 # Copy trained model artifacts (if they exist) - create empty directory if not
 RUN mkdir -p /app/artifacts

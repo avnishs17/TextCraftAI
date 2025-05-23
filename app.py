@@ -23,7 +23,10 @@ app = FastAPI(
 
 templates = Jinja2Templates(directory="templates")
 
-# Mount static files
+# Mount static files (ensure directory exists)
+import os
+if not os.path.exists("static"):
+    os.makedirs("static")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Health check endpoint for Railway
